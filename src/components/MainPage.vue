@@ -11,6 +11,7 @@
         @editStart="onEditNoteStart"
         @editEnd="onEditNoteEnd"
         @addChild="onAddChildNote"
+        @addNoteAfter="onAddNoteAfter"
       />
 
       <!-- ノート追加ボタン -->
@@ -34,14 +35,24 @@ export default {
     }
   },
   methods: {
-    onClickButtonAdd : function() {
-      this.noteList.push({
+    onAddNoteCommon : function(targetList, layer, index) {
+      layer = layer || 1;
+      const note = {
         id : new Date().getTime().toString(16),
-        name : `新規ノート`,
+        name : `新規ノート-${layer}-${targetList.length}`,
         mouseover : false,
         editing : false,
         children : [],
-      })
+        layer : layer,
+      };
+      if (index == null) {
+        targetList.push(note);
+      } else {
+        targetList.splice(index + 1, 0, note);
+      }
+    },
+    onClickButtonAdd : function() {
+      this.onAddNoteCommon(this.noteList, 1);
     },
     onDeleteNote : function(parentNote, note) {
       const targetList = parentNote == null ? this.noteList : parentNote.children;
@@ -62,14 +73,14 @@ export default {
         this.onEditNoteEnd(note);
       }
     },
-    onAddChildNote : function(note) {
-      note.children.push({
-        id : new Date().getTime().toString(16),
-        name : note.name + 'の子',
-        mouseover : false,
-        editing : false,
-        children : [],
-      });
+    onAddChildNote : function(note, layer) {
+      this.onAddNoteCommon(note.children, layer);
+    },
+    onAddNoteAfter : function(parentNote, note) {
+      const targetList = parentNote == null ? this.noteList : parentNote.children;
+      const layer = parentNote == null ? null : parentNote.layer + 1;
+      const index = targetList.indexOf(note);
+      this.onAddNoteCommon(targetList, layer, index);
     },
   },
   components: {
