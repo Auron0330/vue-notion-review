@@ -5,10 +5,12 @@
       <NoteItem
         v-for="note in noteList"
         v-bind:note="note"
+        v-bind:layer="1"
         v-bind:key="note.id"
         @delete="onDeleteNote"
         @editStart="onEditNoteStart"
         @editEnd="onEditNoteEnd"
+        @addChild="onAddChildNote"
       />
 
       <!-- ノート追加ボタン -->
@@ -38,21 +40,36 @@ export default {
         name : `新規ノート`,
         mouseover : false,
         editing : false,
+        children : [],
       })
     },
-    onDeleteNote : function(deleteNote) {
-      const index = this.noteList.indexOf(deleteNote);
-      this.noteList.splice(index, 1);
+    onDeleteNote : function(parentNote, note) {
+      const targetList = parentNote == null ? this.noteList : parentNote.children;
+      const index = targetList.indexOf(note);
+      targetList.splice(index, 1);
     },
-    onEditNoteStart : function(editNote) {
-      for (let note of this.noteList) {
+    onEditNoteStart : function(editNote, parentNote) {
+      const targetList = parentNote == null ? this.noteList : parentNote.children;
+      for (let note of targetList) {
         note.editing = (note.id === editNote.id);
+        this.onEditNoteStart(editNote, note);
       }
     },
-    onEditNoteEnd : function() {
-      for (let note of this.noteList) {
-          note.editing = false;
+    onEditNoteEnd : function(parentNote) {
+      const targetList = parentNote == null ? this.noteList : parentNote.children;
+      for (let note of targetList) {
+        note.editing = false;
+        this.onEditNoteEnd(note);
       }
+    },
+    onAddChildNote : function(note) {
+      note.children.push({
+        id : new Date().getTime().toString(16),
+        name : note.name + 'の子',
+        mouseover : false,
+        editing : false,
+        children : [],
+      });
     },
   },
   components: {
